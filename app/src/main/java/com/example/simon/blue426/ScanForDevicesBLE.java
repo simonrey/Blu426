@@ -8,9 +8,11 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import static android.content.ContentValues.TAG;
 
@@ -25,15 +27,17 @@ public class ScanForDevicesBLE {
 
     LeDeviceListAdapter leDeviceListAdapter;
     Handler handler = new Handler();
-    BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
-    BluetoothLeScanner leScanner = btAdapter.getBluetoothLeScanner();
+    BluetoothAdapter theBluetoothAdapter;
+    BluetoothLeScanner theLeScanner;
     private static final long SCAN_PERIOD = 10000;
     Activity theActivity;
 
-    public ScanForDevicesBLE(Activity activity, LeDeviceListAdapter deviceListAdapter){
+    public ScanForDevicesBLE(Activity activity, LeDeviceListAdapter deviceListAdapter, BluetoothAdapter btAdapter){
         super();
         this.theActivity = activity;
         this.leDeviceListAdapter = deviceListAdapter;
+        this.theBluetoothAdapter = btAdapter;
+        this.theLeScanner = btAdapter.getBluetoothLeScanner();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -42,13 +46,15 @@ public class ScanForDevicesBLE {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    leScanner.stopScan(leScanCallback);
-//                    Log.d("Size", Integer.toString(leDeviceListAdapter.getCount()));
+                    Toast.makeText(theActivity.getApplicationContext(),"Done scanning..."+Integer.toString(leDeviceListAdapter.getCount()),Toast.LENGTH_SHORT).show();
+                    theLeScanner.stopScan(leScanCallback);
+
                 }
             }, SCAN_PERIOD);
-            leScanner.startScan(leScanCallback);
+            Toast.makeText(theActivity.getApplicationContext(), "Scanning for devices...", Toast.LENGTH_SHORT).show();
+            theLeScanner.startScan(leScanCallback);
         } else {
-            leScanner.stopScan(leScanCallback);
+            theLeScanner.stopScan(leScanCallback);
         }
     }
 
@@ -56,20 +62,13 @@ public class ScanForDevicesBLE {
         @Override
         public void onScanResult(int callbackType, final ScanResult result) {
             leDeviceListAdapter.addDevice(result.getDevice());
-            Log.d("onScanResult", "onScanResult: "+leDeviceListAdapter.getCount());
-//            theActivity.runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Log.d("Device", result.getDevice().getName());
-//                    leDeviceListAdapter.addDevice(result.getDevice());
-//                    leDeviceListAdapter.notifyDataSetChanged();
-//                }
-//            });
+            leDeviceListAdapter.notifyDataSetChanged();
         }
         @Override
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
-            Log.d("Failed","Terribel Failure Sir!");
+            Log.d("Failed", Integer.toString(errorCode));
         }
     };
+
 }

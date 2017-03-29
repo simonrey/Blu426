@@ -60,4 +60,6 @@ public class LeDeviceListAdapter extends BaseAdapter {
         return rowView;
     }
 
+    public  void clear(){ leDevices.clear();}
+
 }

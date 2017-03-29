@@ -1,5 +1,6 @@
 package com.example.simon.blue426;
 
+import android.Manifest;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -7,8 +8,10 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,7 +27,10 @@ import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.security.Permission;
+import java.security.PermissionCollection;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
     }
 
     @Override
@@ -100,9 +110,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.bluetooth_search) {
+//            Toast.makeText(this, Integer.toString(leDeviceListAdapter.getCount()), Toast.LENGTH_SHORT).show();
+            leDeviceListAdapter.clear();
             ListView devices = (ListView)findViewById(R.id.btle_devices);
             devices.setAdapter(leDeviceListAdapter);
-            ScanForDevicesBLE scanForDevicesBLE = new ScanForDevicesBLE(this,leDeviceListAdapter);
+            ScanForDevicesBLE scanForDevicesBLE = new ScanForDevicesBLE(this,leDeviceListAdapter,btAdapter);
             scanForDevicesBLE.scanLeDevice(true);
 
         }
