@@ -57,6 +57,7 @@ public class LeDeviceListAdapter extends BaseAdapter {
         BluetoothDevice device = leDevices.get(position);
         leAddr.setText(device.getAddress());
         leName.setText(device.getName());
+        rowView.setTag(device);
         return rowView;
     }
 

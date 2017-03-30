@@ -5,9 +5,13 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-feature android:name="android.hardware.location.network" />
+
+    <service
+        android:name="com.amazonaws.mobileconnectors.s3.transferutility.TransferService"
+        android:enabled="true" />
+
 
     <application
         android:allowBackup="true"
@@ -27,8 +31,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".UploadActivity"
-            android:label="@string/title_activity_upload"
+            android:name=".WorkActivity"
+            android:label="@string/title_activity_work"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data

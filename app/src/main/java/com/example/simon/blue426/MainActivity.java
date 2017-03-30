@@ -1,48 +1,34 @@
 package com.example.simon.blue426;
 
 import android.Manifest;
-import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.le.BluetoothLeScanner;
-import android.content.Context;
 import android.content.Intent;
-import android.database.DataSetObserver;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ListAdapter;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import java.security.Permission;
-import java.security.PermissionCollection;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     Menu theMenu;
-    BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+    BluetoothAdapter btAdapter;
     LeDeviceListAdapter leDeviceListAdapter;
     ScanForDevicesBLE scanForDevicesBLE;
 
-
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
+    public static final String BLUETOOTH_MESSAGE = "NEW_DEVICE";
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -51,8 +37,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        ListView devices = (ListView) findViewById(R.id.btle_devices);
+        devices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                scanForDevicesBLE.scanLeDevice(false);
+                BluetoothDevice device = (BluetoothDevice) view.getTag();
+                Intent intent = new Intent(MainActivity.this, WorkActivity.class);
+                intent.putExtra(BLUETOOTH_MESSAGE,device);
+                startActivity(intent);
+            }
+        });
+
+
+        btAdapter = BluetoothAdapter.getDefaultAdapter();
         leDeviceListAdapter = new LeDeviceListAdapter(this);
-        ListView devices = (ListView)findViewById(R.id.btle_devices);
         devices.setAdapter(leDeviceListAdapter);
 
 
@@ -71,32 +72,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        this.scanForDevicesBLE = new ScanForDevicesBLE(this,leDeviceListAdapter,btAdapter);
-
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-
-
+        this.scanForDevicesBLE = new ScanForDevicesBLE(this, leDeviceListAdapter, btAdapter);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        MenuItem bluetoothSearch = menu.findItem(R.id.bluetooth_search);
-        MenuItem bluetoothStatus = menu.findItem(R.id.bluetooth_status);
         this.theMenu = menu;
-        if (btAdapter == null) {
-            bluetoothSearch.setEnabled(false);
-            bluetoothStatus.setEnabled(false);
-        }
-        if (btAdapter.isEnabled()) {
-            bluetoothStatus.setChecked(true);
-            bluetoothSearch.setEnabled(true);
-        } else if (!btAdapter.isEnabled()) {
-            bluetoothStatus.setChecked(false);
-            bluetoothSearch.setEnabled(false);
-        }
+        UpdateMenuOptions(menu);
         return true;
     }
 
@@ -112,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.bluetooth_search) {
-//            Toast.makeText(this, Integer.toString(leDeviceListAdapter.getCount()), Toast.LENGTH_SHORT).show();
             leDeviceListAdapter.clear();
             scanForDevicesBLE.scanLeDevice(true);
         }
@@ -120,16 +103,48 @@ public class MainActivity extends AppCompatActivity {
             if (btAdapter.isEnabled()) {
                 scanForDevicesBLE.scanLeDevice(false);
                 btAdapter.disable();
-                theMenu.findItem(R.id.bluetooth_status).setChecked(false);
-                theMenu.findItem(R.id.bluetooth_search).setEnabled(false);
-            } else if (!btAdapter.isEnabled()) {
-                theMenu.findItem(R.id.bluetooth_status).setChecked(true);
-                theMenu.findItem(R.id.bluetooth_search).setEnabled(true);
+                invalidateOptionsMenu();
+            }
+            else if (!btAdapter.isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                invalidateOptionsMenu();
+            }
+            else if(resultCode == RESULT_CANCELED) {
+                invalidateOptionsMenu();
+            }
+        }
+    }
+
+    private void UpdateMenuOptions(Menu menu){
+        MenuItem bluetoothSearch = menu.findItem(R.id.bluetooth_search);
+        MenuItem bluetoothStatus = menu.findItem(R.id.bluetooth_status);
+        if (btAdapter == null) {
+            bluetoothSearch.setEnabled(false);
+            bluetoothStatus.setEnabled(false);
+        }
+        if (btAdapter.isEnabled()) {
+            bluetoothStatus.setChecked(true);
+            bluetoothSearch.setEnabled(true);
+        }
+        else if (!btAdapter.isEnabled()) {
+            bluetoothStatus.setChecked(false);
+            bluetoothSearch.setEnabled(false);
+        }
+    }
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu){
+        UpdateMenuOptions(menu);
+        return true;
     }
 
 

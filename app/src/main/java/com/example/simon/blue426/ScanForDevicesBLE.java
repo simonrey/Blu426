@@ -55,7 +55,6 @@ public class ScanForDevicesBLE {
             theLeScanner.startScan(leScanCallback);
         }
         else {
-            Toast.makeText(theActivity.getApplicationContext(),"Stopping device scan...",Toast.LENGTH_SHORT).show();
             theLeScanner.stopScan(leScanCallback);
         }
     }
