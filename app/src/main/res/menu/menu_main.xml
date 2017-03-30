@@ -13,6 +13,22 @@
         android:checkable="true"
         app:showAsAction="never"/>
     <item
+        android:id="@+id/aws_upload"
+        android:title="Upload to AWS"
+        android:visible="false"/>
+    <item
+        android:id="@+id/aws_pause"
+        android:title="Pause Upload"
+        android:visible="false"/>
+    <item
+        android:id="@+id/aws_resume"
+        android:title="Resume Upload"
+        android:visible="false"/>
+    <item
+        android:id="@+id/aws_stop"
+        android:title="Stop Upload"
+        android:visible="false"/>
+    <item
         android:id="@+id/bluetooth_search"
         android:title="Search for Devices"
         app:showAsAction="never"/>
