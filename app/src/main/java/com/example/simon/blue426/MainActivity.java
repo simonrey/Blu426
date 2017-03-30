@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     Menu theMenu;
     BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
     LeDeviceListAdapter leDeviceListAdapter;
+    ScanForDevicesBLE scanForDevicesBLE;
 
 
     private static final int REQUEST_ENABLE_BT = 1;
@@ -51,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         leDeviceListAdapter = new LeDeviceListAdapter(this);
+        ListView devices = (ListView)findViewById(R.id.btle_devices);
+        devices.setAdapter(leDeviceListAdapter);
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -67,13 +71,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        this.scanForDevicesBLE = new ScanForDevicesBLE(this,leDeviceListAdapter,btAdapter);
 
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!btAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
+
 
     }
 
@@ -112,14 +114,11 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.bluetooth_search) {
 //            Toast.makeText(this, Integer.toString(leDeviceListAdapter.getCount()), Toast.LENGTH_SHORT).show();
             leDeviceListAdapter.clear();
-            ListView devices = (ListView)findViewById(R.id.btle_devices);
-            devices.setAdapter(leDeviceListAdapter);
-            ScanForDevicesBLE scanForDevicesBLE = new ScanForDevicesBLE(this,leDeviceListAdapter,btAdapter);
             scanForDevicesBLE.scanLeDevice(true);
-
         }
         if (id == R.id.bluetooth_status) {
             if (btAdapter.isEnabled()) {
+                scanForDevicesBLE.scanLeDevice(false);
                 btAdapter.disable();
                 theMenu.findItem(R.id.bluetooth_status).setChecked(false);
                 theMenu.findItem(R.id.bluetooth_search).setEnabled(false);

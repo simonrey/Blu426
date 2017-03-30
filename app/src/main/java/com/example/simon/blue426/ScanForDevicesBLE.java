@@ -53,7 +53,9 @@ public class ScanForDevicesBLE {
             }, SCAN_PERIOD);
             Toast.makeText(theActivity.getApplicationContext(), "Scanning for devices...", Toast.LENGTH_SHORT).show();
             theLeScanner.startScan(leScanCallback);
-        } else {
+        }
+        else {
+            Toast.makeText(theActivity.getApplicationContext(),"Stopping device scan...",Toast.LENGTH_SHORT).show();
             theLeScanner.stopScan(leScanCallback);
         }
     }

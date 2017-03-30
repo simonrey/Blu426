@@ -5,4 +5,9 @@ package com.example.simon.blue426;
  */
 
 public class AWS {
+
+    public AWS(){
+
+    }
+
 }
