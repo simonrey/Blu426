@@ -39,7 +39,7 @@ public class Util {
      */
     private static CognitoCachingCredentialsProvider getCredProvider(Context context) {
         if (sCredProvider == null) {
-            sCredProvider = new CognitoCachingCredentialsProvider(Context.getApplicationContext(), Constants.COGNITO_POOL_ID, Regions.fromName(Constants.COGNITO_POOL_REGION));
+            sCredProvider = new CognitoCachingCredentialsProvider(context.getApplicationContext(), Constants.COGNITO_POOL_ID, Regions.fromName(Constants.COGNITO_POOL_REGION));
         }
         return sCredProvider;
     }
