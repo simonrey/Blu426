@@ -13,14 +13,21 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Layout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,13 +42,20 @@ public class WorkActivity extends AppCompatActivity {
     public static String BLUETOOTH_MAC;
     public static IntentFilter filter = new IntentFilter();
 
-    private TextView serviceWindow;
+    private TextView charX;
+    private TextView charY;
+    private TextView charZ;
     private ExpandableListView servicesWindow;
+    private ListView characteristicView;
 
-    private AdapterServices servicesAdapter;
+    private Integer count = 0;
+
     public List<String> servicesList;
-    public HashMap<String,List<String>> charactersticMap;
-    public ArrayList<BluetoothGattService> services;
+    public ArrayList<Float> ValX;
+    public ArrayList<Float> ValY;
+    public ArrayList<Float> ValZ;
+
+    public ArrayAdapter adapter;
 
     private BluetoothService BLUETOOTH_SERVICE;
     private static Menu theMenu;
@@ -57,8 +71,9 @@ public class WorkActivity extends AppCompatActivity {
         setContentView(R.layout.activity_work);
         theContext = this.getApplicationContext();
 
-        serviceWindow = (TextView) findViewById(R.id.service_window);
-        servicesWindow = (ExpandableListView) findViewById(R.id.services_window);
+        charX = (TextView) findViewById(R.id.charX);
+        charY = (TextView) findViewById(R.id.charY);
+        charZ = (TextView) findViewById(R.id.charZ);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -86,21 +101,18 @@ public class WorkActivity extends AppCompatActivity {
         filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED);
         filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_SERVICES_DISCOVERED);
 
+        ValX = new ArrayList<>();
+        ValY = new ArrayList<>();
+        ValZ = new ArrayList<>();
         servicesList = new ArrayList<>();
-
-//        servicesAdapter = new AdapterServices(theContext, servicesList, charactersticMap);
-//        servicesWindow.setAdapter(servicesAdapter);
-
-
-
+        adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1);
     }
 
     @Override
     public void onBackPressed()
     {
         BLUETOOTH_SERVICE.EndService();
-        // code here to show dialog
-        super.onBackPressed();  // optional depending on your needs
+        super.onBackPressed();
     }
 
     @Override
@@ -125,8 +137,23 @@ public class WorkActivity extends AppCompatActivity {
                 if(BLUETOOTH_SERVICE.ACTION_DATA_AVAILABLE.equals(action)) {
                     CURRENT_STATE = MenuState.CONNECTED;
                     invalidateOptionsMenu();
-                    String value = intent.getStringExtra(BLUETOOTH_SERVICE.ACTION_DATA_AVAILABLE);
-                    Log.d("Value", value);
+                    int dest = intent.getIntExtra(BLUETOOTH_SERVICE.DATA_CHARACTERISTIC_DESTINATION,0);
+                    byte[] value = intent.getByteArrayExtra(BLUETOOTH_SERVICE.DATA_CHARACTERISTIC_VALUE);
+                    float val = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+
+                    charX.append(String.valueOf(dest)+ String.valueOf(val));
+                    charX.append("\n");
+
+//                    ValX.add(val);
+//                    if(dest == 1){
+//                        ValX.add(val);
+//                    }
+//                    if(dest == 2){
+//                        ValY.add(val);
+//                    }
+//                    if(dest == 3){
+//                        ValZ.add(val);
+//                    }
                 }
                 if(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED.equals(action)){
                     CURRENT_STATE = MenuState.DISCONNECTED;
@@ -292,6 +319,23 @@ public class WorkActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         switch (id){
+            case R.id.DisplayX:
+                charX.append("X:\n");
+                for(Float f : ValX){
+                    charX.append(String.valueOf(f));
+                    charX.append("\n");
+                }
+                charX.append("Y:\n");
+                for(Float f : ValY){
+                    charX.append(String.valueOf(f));
+                    charX.append("\n");
+                }
+                charX.append("Z:\n");
+                for(Float f : ValZ){
+                    charX.append(String.valueOf(f));
+                    charX.append("\n");
+                }
+                break;
             case R.id.aws_stop:
                 break;
             case R.id.aws_upload:
@@ -331,5 +375,7 @@ public class WorkActivity extends AppCompatActivity {
         UpdateMenuOptions(theMenu);
         return true;
     }
+
+
 
 }

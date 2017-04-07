@@ -32,5 +32,9 @@
         android:id="@+id/bluetooth_write"
         android:title="Bluetooth Write"
         android:visible="false"/>
+    <item
+        android:id="@+id/DisplayX"
+        android:title="DisplayX"
+        android:visible="true"/>
 
 </menu>

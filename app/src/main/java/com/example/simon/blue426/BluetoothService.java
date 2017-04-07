@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.support.annotation.Nullable;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -29,7 +31,9 @@ import static android.bluetooth.BluetoothProfile.STATE_DISCONNECTED;
 public class BluetoothService extends Service{
 
     public static final String DATA_SERVICE = "ACTION_SERVICE_FOUND";
-    public static final String DATA_CHARACTERISTIC = "ACTION_CHARACTERISITIC_CHANGED";
+    public static final String DATA_CHARACTERISTIC_VALUE = "ACTION_CHARACTERISITIC_CHANGED";
+    public static final String DATA_CHARACTERISTIC_DESTINATION = "ACTION_CHARACTERISTIC_DESTINATION";
+
     BluetoothDevice theDevice;
     Context theContext;
     BluetoothGatt theGatt;
@@ -39,10 +43,12 @@ public class BluetoothService extends Service{
     public static final String ACTION_GATT_DISCONNECTED = "ACTION_GATT_DISCONNECTED";
     public static final String ACTION_GATT_SERVICES_DISCOVERED = "ACTION_GATT_SERVICES_DISCOVERED";
     public static final String ACTION_DATA_AVAILABLE = "ACTION_DATA_AVAILABLE";
-    public static final String EXTRA_DATA = "EXTRA_DATA";
 
+    private static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     private static final String SERVICE1 = "02366e80-cf3a-11e1-9ab4-0002a5d5c51b";
     private static final String CHARACTERISTIC1 = "e23e78a0-cf4a-11e1-8ffc-0002a5d5c51b";
+    private static final String CHARACTERISTIC2 = "cd20c480-e48b-11e2-840b-0002a5d5c51b";
+    private static final String CHARACTERISTIC3 = "01c50b60-e48c-11e2-a073-0002a5d5c51b";
 
     private ArrayList<BluetoothGattService> SERVICES;
 
@@ -64,6 +70,9 @@ public class BluetoothService extends Service{
     public void StartService(){
 
         theGatt = theDevice.connectGatt(theContext, false, new BluetoothGattCallback() {
+
+            List<BluetoothGattCharacteristic> chars = new ArrayList<BluetoothGattCharacteristic>();
+
             @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
@@ -81,11 +90,19 @@ public class BluetoothService extends Service{
                 }
             }
 
+            public void requestCharacteristics(BluetoothGatt gatt){
+                gatt.readCharacteristic(chars.get(chars.size()-1));
+            }
+
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
                 if(status == BluetoothGatt.GATT_SUCCESS) {
                     broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED, gatt.getService(UUID.fromString(SERVICE1)));
+                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC1)));
+                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC2)));
+                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC3)));
+                    requestCharacteristics(gatt);
                 }
             }
             @Override
@@ -97,8 +114,16 @@ public class BluetoothService extends Service{
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicRead(gatt, characteristic, status);
                 if(status == BluetoothGatt.GATT_SUCCESS){
-                    broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                    theGatt.setCharacteristicNotification(characteristic,true);
+                    BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    theGatt.writeDescriptor(descriptor);
+                    chars.remove(chars.get(chars.size()-1));
                 }
+                if(chars.size()>0){
+                    requestCharacteristics(gatt);
+                }
+
             }
 
             @Override
@@ -121,6 +146,13 @@ public class BluetoothService extends Service{
 
     @TargetApi(Build.VERSION_CODES.N)
     private void broadcastUpdate(final String action, final BluetoothGattService service) {
+//        for(BluetoothGattCharacteristic characteristic : service.getCharacteristics()){
+//            theGatt.readCharacteristic(characteristic);
+//        }
+//        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC1)));
+//        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC2)));
+//        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC3)));
+
         Intent intent = new Intent(action);
         String serviceUUID = service.getUuid().toString();
         intent.putExtra(DATA_SERVICE,serviceUUID);
@@ -133,7 +165,18 @@ public class BluetoothService extends Service{
 
         if(UUID.fromString(CHARACTERISTIC1).equals(characteristic.getUuid())){
             byte[] value = characteristic.getValue();
-            intent.putExtra(DATA_CHARACTERISTIC, String.valueOf(value));
+            intent.putExtra(DATA_CHARACTERISTIC_DESTINATION,1);
+            intent.putExtra(DATA_CHARACTERISTIC_VALUE,value);
+        }
+        if(UUID.fromString(CHARACTERISTIC2).equals(characteristic.getUuid())){
+            byte [] value = characteristic.getValue();
+            intent.putExtra(DATA_CHARACTERISTIC_DESTINATION,2);
+            intent.putExtra(DATA_CHARACTERISTIC_VALUE,value);
+        }
+        if(UUID.fromString(CHARACTERISTIC3).equals(characteristic.getUuid())){
+            byte [] value = characteristic.getValue();
+            intent.putExtra(DATA_CHARACTERISTIC_DESTINATION,3);
+            intent.putExtra(DATA_CHARACTERISTIC_VALUE,value);
         }
         theContext.sendBroadcast(intent);
 
