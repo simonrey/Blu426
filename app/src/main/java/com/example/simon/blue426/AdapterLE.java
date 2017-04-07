@@ -14,11 +14,11 @@ import java.util.ArrayList;
  * Created by simon on 3/28/2017.
  */
 
-public class LeDeviceListAdapter extends BaseAdapter {
+public class AdapterLE extends BaseAdapter {
     private ArrayList<BluetoothDevice> leDevices;
     private LayoutInflater inflater;
 
-    public LeDeviceListAdapter(Context context) {
+    public AdapterLE(Context context) {
         super();
         leDevices = new ArrayList<BluetoothDevice>();
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

@@ -1,23 +1,29 @@
 package com.example.simon.blue426;
 
+import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ExpandableListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-
-import static android.bluetooth.BluetoothDevice.BOND_NONE;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class WorkActivity extends AppCompatActivity {
 
@@ -27,7 +33,15 @@ public class WorkActivity extends AppCompatActivity {
     public static BluetoothDevice BLUETOOTH_DEVICE;
     public static String BLUETOOTH_NAME;
     public static String BLUETOOTH_MAC;
-    public static int BLUETOOTH_BONDSTATE;
+    public static IntentFilter filter = new IntentFilter();
+
+    private TextView serviceWindow;
+    private ExpandableListView servicesWindow;
+
+    private AdapterServices servicesAdapter;
+    public List<String> servicesList;
+    public HashMap<String,List<String>> charactersticMap;
+    public ArrayList<BluetoothGattService> services;
 
     private BluetoothService BLUETOOTH_SERVICE;
     private static Menu theMenu;
@@ -43,6 +57,9 @@ public class WorkActivity extends AppCompatActivity {
         setContentView(R.layout.activity_work);
         theContext = this.getApplicationContext();
 
+        serviceWindow = (TextView) findViewById(R.id.service_window);
+        servicesWindow = (ExpandableListView) findViewById(R.id.services_window);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -56,21 +73,34 @@ public class WorkActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
-
         BLUETOOTH_DEVICE = getIntent().getParcelableExtra(BLUETOOTH_MESSAGE);
         BLUETOOTH_NAME = BLUETOOTH_DEVICE.getName();
         BLUETOOTH_MAC = BLUETOOTH_DEVICE.getAddress();
-        BLUETOOTH_BONDSTATE = BLUETOOTH_DEVICE.getBondState();
-        CURRENT_STATE = (BLUETOOTH_BONDSTATE == BOND_NONE) ? MenuState.DISCONNECTED : MenuState.CONNECTED;
+        CURRENT_STATE = MenuState.DISCONNECTED;
 
         SetActionBarTitles();
 
+        filter.addAction(BLUETOOTH_SERVICE.ACTION_DATA_AVAILABLE);
+        filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_CONNECTED);
+        filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_CONNECTING);
+        filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED);
+        filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_SERVICES_DISCOVERED);
+
+        servicesList = new ArrayList<>();
+
+//        servicesAdapter = new AdapterServices(theContext, servicesList, charactersticMap);
+//        servicesWindow.setAdapter(servicesAdapter);
 
 
-        BLUETOOTH_SERVICE = new BluetoothService(BLUETOOTH_DEVICE,theContext);
-//        BLUETOOTH_SERVICE.StartService();
 
+    }
 
+    @Override
+    public void onBackPressed()
+    {
+        BLUETOOTH_SERVICE.EndService();
+        // code here to show dialog
+        super.onBackPressed();  // optional depending on your needs
     }
 
     @Override
@@ -81,6 +111,7 @@ public class WorkActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final String action = intent.getAction();
+                Log.d("Action",action);
                 if(BLUETOOTH_SERVICE.ACTION_GATT_CONNECTED.equals(action)){
                     CURRENT_STATE = MenuState.CONNECTED;
                     invalidateOptionsMenu();
@@ -88,25 +119,34 @@ public class WorkActivity extends AppCompatActivity {
                 if(BLUETOOTH_SERVICE.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){
                     CURRENT_STATE = MenuState.CONNECTED;
                     invalidateOptionsMenu();
-
-
+                    String service = intent.getStringExtra(BLUETOOTH_SERVICE.DATA_SERVICE);
+                    serviceListAdd(service);
                 }
                 if(BLUETOOTH_SERVICE.ACTION_DATA_AVAILABLE.equals(action)) {
                     CURRENT_STATE = MenuState.CONNECTED;
                     invalidateOptionsMenu();
-
-
+                    String value = intent.getStringExtra(BLUETOOTH_SERVICE.ACTION_DATA_AVAILABLE);
+                    Log.d("Value", value);
                 }
                 if(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED.equals(action)){
                     CURRENT_STATE = MenuState.DISCONNECTED;
                     invalidateOptionsMenu();
 
-
                 }
             }
         };
+        registerReceiver(GattUpdate,filter);
 
+        BLUETOOTH_SERVICE = new BluetoothService(BLUETOOTH_DEVICE,theContext);
+        BLUETOOTH_SERVICE.StartService();
 
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private void serviceListAdd(String newService) {
+        if(newService!=null){
+            servicesList.add(newService);
+        }
     }
 
     private void SetActionBarTitles(){
@@ -119,6 +159,15 @@ public class WorkActivity extends AppCompatActivity {
         getSupportActionBar().setSubtitle(CURRENT_STATE.toString());
     }
 
+    @Override
+    protected void onDestroy() {
+        if (GattUpdate != null) {
+            unregisterReceiver(GattUpdate);
+            GattUpdate = null;
+        }
+        BLUETOOTH_SERVICE.EndService();
+        super.onDestroy();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -131,70 +180,111 @@ public class WorkActivity extends AppCompatActivity {
     private void UpdateMenuOptions(Menu menu){
         menu.findItem(R.id.bluetooth_search).setVisible(false);
         menu.findItem(R.id.bluetooth_status).setVisible(false);
-        MenuItem pause = menu.findItem(R.id.aws_pause);
-        MenuItem resume = menu.findItem(R.id.aws_resume);
         MenuItem stop = menu.findItem(R.id.aws_stop);
         MenuItem upload = menu.findItem(R.id.aws_upload);
+        MenuItem read = menu.findItem(R.id.bluetooth_read);
+        MenuItem write = menu.findItem(R.id.bluetooth_write);
         switch (CURRENT_STATE) {
             case CONNECTING:
-                pause.setVisible(false);
-                pause.setEnabled(false);
-                resume.setVisible(false);
-                resume.setEnabled(false);
+
                 stop.setVisible(true);
                 stop.setEnabled(false);
+
                 upload.setVisible(true);
                 upload.setEnabled(false);
+
+                read.setVisible(true);
+                read.setEnabled(false);
+
+                write.setVisible(true);
+                write.setEnabled(false);
                 break;
             case CONNECTED:
-                pause.setVisible(false);
-                resume.setVisible(false);
+
                 stop.setVisible(true);
                 stop.setEnabled(false);
+
                 upload.setVisible(true);
                 upload.setEnabled(true);
+
+                read.setVisible(false);
+                read.setEnabled(false);
+
+                write.setVisible(false);
+                write.setEnabled(false);
                 break;
             case DISCONNECTED:
-                pause.setVisible(false);
-                pause.setEnabled(false);
-                resume.setVisible(false);
-                resume.setEnabled(false);
                 stop.setVisible(true);
                 stop.setEnabled(false);
+
                 upload.setVisible(true);
                 upload.setEnabled(false);
+
+                read.setVisible(true);
+                read.setEnabled(true);
+
+                write.setVisible(true);
+                write.setEnabled(true);
                 break;
             case UPLOADING:
-                pause.setVisible(true);
-                resume.setVisible(false);
                 stop.setVisible(true);
-                upload.setVisible(false);
+                stop.setEnabled(true);
+
+                upload.setVisible(true);
                 upload.setEnabled(false);
+
+                read.setVisible(false);
+                read.setEnabled(false);
+
+                write.setVisible(false);
+                write.setEnabled(false);
                 break;
             case STOPPED:
-                pause.setVisible(false);
-                resume.setVisible(false);
                 stop.setVisible(true);
                 stop.setEnabled(false);
+
                 upload.setVisible(true);
+                upload.setEnabled(true);
+
+                read.setVisible(false);
+                read.setEnabled(false);
+
+                write.setVisible(false);
+                write.setEnabled(false);
+
                 break;
             case RESUMED:
-                pause.setVisible(true);
-                resume.setVisible(true);
-                resume.setEnabled(false);
                 stop.setVisible(true);
+                stop.setEnabled(true);
+
                 upload.setVisible(false);
+                upload.setEnabled(false);
+
+                read.setVisible(false);
+                read.setEnabled(false);
+
+                write.setVisible(false);
+                write.setEnabled(false);
+
                 break;
             case PAUSED:
-                pause.setVisible(true);
-                pause.setEnabled(false);
-                resume.setVisible(true);
                 stop.setVisible(true);
+                stop.setEnabled(true);
+
                 upload.setVisible(false);
+                upload.setEnabled(false);
+
+                read.setVisible(false);
+                read.setEnabled(false);
+
+                write.setVisible(false);
+                write.setEnabled(false);
+
                 break;
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -202,13 +292,14 @@ public class WorkActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         switch (id){
-            case R.id.aws_pause:
-                break;
-            case R.id.aws_resume:
-                break;
             case R.id.aws_stop:
                 break;
             case R.id.aws_upload:
+                break;
+            case R.id.bluetooth_read:
+                BLUETOOTH_SERVICE.StartService();
+                break;
+            case R.id.bluetooth_write:
                 break;
         }
         return super.onOptionsItemSelected(item);

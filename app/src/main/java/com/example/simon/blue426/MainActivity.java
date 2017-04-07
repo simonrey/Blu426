@@ -21,8 +21,8 @@ public class MainActivity extends AppCompatActivity {
 
     Menu theMenu;
     BluetoothAdapter btAdapter;
-    LeDeviceListAdapter leDeviceListAdapter;
-    ScanForDevicesBLE scanForDevicesBLE;
+    AdapterLE leDeviceListAdapter;
+    ScannerLE scannerLE;
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                scanForDevicesBLE.scanLeDevice(false);
+                scannerLE.scanLeDevice(false);
                 BluetoothDevice device = (BluetoothDevice) view.getTag();
                 Intent intent = new Intent(MainActivity.this, WorkActivity.class);
                 intent.putExtra(BLUETOOTH_MESSAGE,device);
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
-        leDeviceListAdapter = new LeDeviceListAdapter(this);
+        leDeviceListAdapter = new AdapterLE(this);
         devices.setAdapter(leDeviceListAdapter);
 
 
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        this.scanForDevicesBLE = new ScanForDevicesBLE(this, leDeviceListAdapter, btAdapter);
+        this.scannerLE = new ScannerLE(this, leDeviceListAdapter, btAdapter);
     }
 
     @Override
@@ -97,11 +97,11 @@ public class MainActivity extends AppCompatActivity {
         }
         if (id == R.id.bluetooth_search) {
             leDeviceListAdapter.clear();
-            scanForDevicesBLE.scanLeDevice(true);
+            scannerLE.scanLeDevice(true);
         }
         if (id == R.id.bluetooth_status) {
             if (btAdapter.isEnabled()) {
-                scanForDevicesBLE.scanLeDevice(false);
+                scannerLE.scanLeDevice(false);
                 btAdapter.disable();
                 invalidateOptionsMenu();
             }

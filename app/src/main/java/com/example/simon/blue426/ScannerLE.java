@@ -3,36 +3,31 @@ package com.example.simon.blue426;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by simon on 3/28/2017.
  */
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-public class ScanForDevicesBLE {
+public class ScannerLE {
 
 
 
-    LeDeviceListAdapter leDeviceListAdapter;
+    AdapterLE leDeviceListAdapter;
     Handler handler = new Handler();
     BluetoothAdapter theBluetoothAdapter;
     BluetoothLeScanner theLeScanner;
     private static final long SCAN_PERIOD = 10000;
     Activity theActivity;
 
-    public ScanForDevicesBLE(Activity activity, LeDeviceListAdapter deviceListAdapter, BluetoothAdapter btAdapter){
+    public ScannerLE(Activity activity, AdapterLE deviceListAdapter, BluetoothAdapter btAdapter){
         super();
         this.theActivity = activity;
         this.leDeviceListAdapter = deviceListAdapter;

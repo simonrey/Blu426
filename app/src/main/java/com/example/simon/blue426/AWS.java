@@ -87,20 +87,20 @@ public class AWS {
         @Override
         public void onError(int id, Exception e) {
             Log.e(TAG, "Error during upload: " + id, e);
-            updateList();
+//            updateList();
         }
 
         @Override
         public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
             Log.d(TAG, String.format("onProgressChanged: %d, total: %d, current: %d",
                     id, bytesTotal, bytesCurrent));
-            updateList();
+//            updateList();
         }
 
         @Override
         public void onStateChanged(int id, TransferState newState) {
             Log.d(TAG, "onStateChanged: " + id + ", " + newState);
-            updateList();
+//            updateList();
         }
     }
 
