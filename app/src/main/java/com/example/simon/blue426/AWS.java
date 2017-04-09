@@ -1,107 +1,83 @@
 package com.example.simon.blue426;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.SimpleAdapter;
 
+import com.amazonaws.mobile.content.*;
+import com.amazonaws.mobile.util.ImageSelectorUtils;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferType;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
+import com.amazonaws.mobile.AWSMobileClient;
+import com.amazonaws.regions.Regions;
+
 
 /**
  * Created by Ludo Reynders on 4/1/2017.
  */
 
 public class AWS {
+    public static final String S3_PREFIX_PUBLIC = "public/";
+    public static final String S3_PREFIX_PRIVATE = "private/";
+    public static final String S3_PREFIX_PROTECTED = "protected/";
+    public static final String S3_PREFIX_UPLOADS = "uploads/";
 
-    // Indicates that no upload is currently selected
-    private static final int INDEX_NOT_CHECKED = -1;
+    /** Permission Request Code (Must be < 256). */
+    private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 93;
 
-    // The TransferUtility is the primary class for managing transfer to S3
-    private TransferUtility transferUtility;
+    /** Upload Request Code for uploads folder action **/
+    private static final int UPLOAD_REQUEST_CODE = 112;
 
-    // The SimpleAdapter adapts the data about transfers to rows in the UI
-    private SimpleAdapter simpleAdapter;
+    /** The user file manager. Used on uploads folder */
+    private UserFileManager userFileManager;
 
-    // A List of all transfers
-    private List<TransferObserver> observers;
+    private void upload(final String bucket, final Regions region) {
+        AWSMobileClient.defaultMobileClient()
+                .createUserFileManager(getContext(), bucket, S3_PREFIX_UPLOADS, region,
+                        new UserFileManager.BuilderResultHandler() {
+                            @Override
+                            public void onComplete(final UserFileManager userFileManager) {
+                                if (!isAdded()) {
+                                    userFileManager.destroy();
+                                    return;
+                                }
 
-    /**
-     * This map is used to provide data to the SimpleAdapter above. See the
-     * fillMap() function for how it relates observers to rows in the displayed
-     * activity.
-     */
-    private ArrayList<HashMap<String, Object>> transferRecordMaps;
+                                UserFilesDemoFragment.this.userFileManager = userFileManager;
+                                userFileManagerCreatingLatch.countDown();
+                            }
+                        });
 
-    // Which row in the UI is currently checked (if any)
-    private int checkedIndex;
+        final Activity activity = getActivity();
 
-    public AWS(Context context){
-        super();
-        transferUtility = Util.getTransferUtility(context);
-        checkedIndex = INDEX_NOT_CHECKED;
-        transferRecordMaps = new ArrayList<HashMap<String, Object>>();
-
-    }
-
-    /**
-     * Gets all relevant transfers from the Transfer Service for populating the
-     * UI
-     */
-    private void initData() {
-        transferRecordMaps.clear();
-        // Use TransferUtility to get all upload transfers.
-        observers = transferUtility.getTransfersWithType(TransferType.UPLOAD);
-        TransferListener listener = new UploadListener();
-        for (TransferObserver observer : observers) {
-
-            // For each transfer we will will create an entry in
-            // transferRecordMaps which will display
-            // as a single row in the UI
-            HashMap<String, Object> map = new HashMap<String, Object>();
-            Util.fillMap(map, observer, false);
-            transferRecordMaps.add(map);
-
-            // Sets listeners to in progress transfers
-            if (TransferState.WAITING.equals(observer.getState())
-                    || TransferState.WAITING_FOR_NETWORK.equals(observer.getState())
-                    || TransferState.IN_PROGRESS.equals(observer.getState())) {
-                observer.setTransferListener(listener);
-            }
+        if (ContextCompat.checkSelfPermission(activity,
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE);
+            return;
         }
-        simpleAdapter.notifyDataSetChanged();
+
+        // We have permission, so show the image selector.
+        final Intent intent = ImageSelectorUtils.getImageSelectionIntent();
+        startActivityForResult(intent, UPLOAD_REQUEST_CODE);
     }
 
 
-    private class UploadListener implements TransferListener {
 
-        // Simply updates the UI list when notified.
-        @Override
-        public void onError(int id, Exception e) {
-            Log.e(TAG, "Error during upload: " + id, e);
-//            updateList();
-        }
 
-        @Override
-        public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
-            Log.d(TAG, String.format("onProgressChanged: %d, total: %d, current: %d",
-                    id, bytesTotal, bytesCurrent));
-//            updateList();
-        }
-
-        @Override
-        public void onStateChanged(int id, TransferState newState) {
-            Log.d(TAG, "onStateChanged: " + id + ", " + newState);
-//            updateList();
-        }
-    }
 
 }

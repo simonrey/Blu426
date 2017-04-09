@@ -17,6 +17,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.amazonaws.mobile.AWSMobileClient;
+import com.amazonaws.mobilehelper.auth.IdentityManager;
+
 public class MainActivity extends AppCompatActivity {
 
     Menu theMenu;
@@ -28,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
     public static final String BLUETOOTH_MESSAGE = "NEW_DEVICE";
 
+    private IdentityManager identityManager;
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -46,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
                 scannerLE.scanLeDevice(false);
                 BluetoothDevice device = (BluetoothDevice) view.getTag();
                 Intent intent = new Intent(MainActivity.this, WorkActivity.class);
-                intent.putExtra(BLUETOOTH_MESSAGE,device);
+                intent.putExtra(BLUETOOTH_MESSAGE, device);
                 startActivity(intent);
             }
         });
@@ -56,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
         leDeviceListAdapter = new AdapterLE(this);
         devices.setAdapter(leDeviceListAdapter);
 
+        AWSMobileClient.initializeMobileClientIfNecessary(this);
+        final AWSMobileClient awsMobileClient = AWSMobileClient.defaultMobileClient();
+        identityManager = awsMobileClient.getIdentityManager();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {

@@ -339,6 +339,7 @@ public class WorkActivity extends AppCompatActivity {
             case R.id.aws_stop:
                 break;
             case R.id.aws_upload:
+
                 break;
             case R.id.bluetooth_read:
                 BLUETOOTH_SERVICE.StartService();
