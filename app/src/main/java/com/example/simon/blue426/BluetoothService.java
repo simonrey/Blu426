@@ -38,6 +38,8 @@ public class BluetoothService extends Service{
     Context theContext;
     BluetoothGatt theGatt;
 
+
+
     public static final String ACTION_GATT_CONNECTING = "ACTION_GATT_CONNECTING";
     public static final String ACTION_GATT_CONNECTED = "ACTION_GATT_CONNECTED";
     public static final String ACTION_GATT_DISCONNECTED = "ACTION_GATT_DISCONNECTED";
@@ -99,10 +101,10 @@ public class BluetoothService extends Service{
                 super.onServicesDiscovered(gatt, status);
                 if(status == BluetoothGatt.GATT_SUCCESS) {
                     broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED, gatt.getService(UUID.fromString(SERVICE1)));
-                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC1)));
-                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC2)));
-                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC3)));
-                    requestCharacteristics(gatt);
+//                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC1)));
+//                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC2)));
+//                    chars.add(gatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC3)));
+//                    requestCharacteristics(gatt);
                 }
             }
             @Override
@@ -118,11 +120,11 @@ public class BluetoothService extends Service{
                     BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
                     descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                     theGatt.writeDescriptor(descriptor);
-                    chars.remove(chars.get(chars.size()-1));
+//                    chars.remove(chars.get(chars.size()-1));
                 }
-                if(chars.size()>0){
-                    requestCharacteristics(gatt);
-                }
+//                if(chars.size()>0){
+//                    requestCharacteristics(gatt);
+//                }
 
             }
 
@@ -149,7 +151,7 @@ public class BluetoothService extends Service{
 //        for(BluetoothGattCharacteristic characteristic : service.getCharacteristics()){
 //            theGatt.readCharacteristic(characteristic);
 //        }
-//        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC1)));
+        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC1)));
 //        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC2)));
 //        theGatt.readCharacteristic(service.getCharacteristic(UUID.fromString(CHARACTERISTIC3)));
 
