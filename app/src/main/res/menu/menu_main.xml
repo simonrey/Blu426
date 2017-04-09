@@ -25,16 +25,24 @@
         android:title="Stop Upload"
         android:visible="false"/>
     <item
-        android:id="@+id/bluetooth_read"
+        android:id="@+id/bluetooth_receive"
         android:title="Bluetooth Read"
         android:visible="false"/>
     <item
-        android:id="@+id/bluetooth_write"
+        android:id="@+id/bluetooth_send"
         android:title="Bluetooth Write"
         android:visible="false"/>
     <item
         android:id="@+id/DisplayX"
         android:title="DisplayX"
-        android:visible="true"/>
+        android:visible="false"/>
+    <item
+        android:id="@+id/DisplayY"
+        android:title="DisplayY"
+        android:visible="false"/>
+    <item
+        android:id="@+id/DisplayZ"
+        android:title="DisplayZ"
+        android:visible="false"/>
 
 </menu>

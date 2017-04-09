@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -45,10 +46,9 @@ public class WorkActivity extends AppCompatActivity {
     private TextView charX;
     private TextView charY;
     private TextView charZ;
-    private ExpandableListView servicesWindow;
-    private ListView characteristicView;
 
-    private Integer count = 0;
+    private static boolean isReceiverReady;
+
 
     public List<String> servicesList;
     public ArrayList<Float> ValX;
@@ -115,6 +115,13 @@ public class WorkActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
+    public static boolean getReceiverStatus(){
+        return isReceiverReady;
+    }
+    public static void setReceiverStatus(boolean receiverReady){
+        isReceiverReady = receiverReady;
+    }
+
     @Override
     protected void onResume(){
         super.onResume();
@@ -141,25 +148,26 @@ public class WorkActivity extends AppCompatActivity {
                     byte[] value = intent.getByteArrayExtra(BLUETOOTH_SERVICE.DATA_CHARACTERISTIC_VALUE);
                     float val = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat();
 
-                    charX.append(String.valueOf(dest)+ String.valueOf(val));
-                    charX.append("\n");
+//                    charX.append(String.valueOf(dest)+ String.valueOf(val));
+//                    charX.append("\n");
 
-//                    ValX.add(val);
-//                    if(dest == 1){
-//                        ValX.add(val);
-//                    }
-//                    if(dest == 2){
-//                        ValY.add(val);
-//                    }
-//                    if(dest == 3){
-//                        ValZ.add(val);
-//                    }
+                    ValX.add(val);
+                    if(dest == 1){
+                        ValX.add(val);
+                    }
+                    if(dest == 2){
+                        ValY.add(val);
+                    }
+                    if(dest == 3){
+                        ValZ.add(val);
+                    }
                 }
                 if(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED.equals(action)){
                     CURRENT_STATE = MenuState.DISCONNECTED;
                     invalidateOptionsMenu();
 
                 }
+                isReceiverReady = true;
             }
         };
         registerReceiver(GattUpdate,filter);
@@ -167,6 +175,28 @@ public class WorkActivity extends AppCompatActivity {
         BLUETOOTH_SERVICE = new BluetoothService(BLUETOOTH_DEVICE,theContext);
         BLUETOOTH_SERVICE.StartService();
 
+    }
+
+    private void displayValX(){
+        charX.append("X:\n");
+        for(Float f : ValX){
+            charX.append(String.valueOf(f));
+            charX.append("\n");
+        }
+    }
+    private void displayValY(){
+        charY.append("Y:\n");
+        for(Float f : ValY){
+            charX.append(String.valueOf(f));
+            charX.append("\n");
+        }
+    }
+    private void displayValZ(){
+        charZ.append("Z:\n");
+        for(Float f : ValZ){
+            charX.append(String.valueOf(f));
+            charX.append("\n");
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -209,8 +239,8 @@ public class WorkActivity extends AppCompatActivity {
         menu.findItem(R.id.bluetooth_status).setVisible(false);
         MenuItem stop = menu.findItem(R.id.aws_stop);
         MenuItem upload = menu.findItem(R.id.aws_upload);
-        MenuItem read = menu.findItem(R.id.bluetooth_read);
-        MenuItem write = menu.findItem(R.id.bluetooth_write);
+        MenuItem LeSend = menu.findItem(R.id.bluetooth_send);
+        MenuItem LeReceive = menu.findItem(R.id.bluetooth_receive);
         switch (CURRENT_STATE) {
             case CONNECTING:
 
@@ -220,11 +250,12 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(true);
                 upload.setEnabled(false);
 
-                read.setVisible(true);
-                read.setEnabled(false);
+                LeReceive.setVisible(true);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(true);
-                write.setEnabled(false);
+                LeSend.setVisible(true);
+                LeSend.setEnabled(false);
+
                 break;
             case CONNECTED:
 
@@ -234,11 +265,12 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(true);
                 upload.setEnabled(true);
 
-                read.setVisible(false);
-                read.setEnabled(false);
+                LeReceive.setVisible(false);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(false);
-                write.setEnabled(false);
+                LeSend.setVisible(false);
+                LeSend.setEnabled(false);
+
                 break;
             case DISCONNECTED:
                 stop.setVisible(true);
@@ -247,11 +279,12 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(true);
                 upload.setEnabled(false);
 
-                read.setVisible(true);
-                read.setEnabled(true);
+                LeReceive.setVisible(true);
+                LeReceive.setEnabled(true);
 
-                write.setVisible(true);
-                write.setEnabled(true);
+                LeSend.setVisible(true);
+                LeSend.setEnabled(true);
+
                 break;
             case UPLOADING:
                 stop.setVisible(true);
@@ -260,11 +293,12 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(true);
                 upload.setEnabled(false);
 
-                read.setVisible(false);
-                read.setEnabled(false);
+                LeReceive.setVisible(false);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(false);
-                write.setEnabled(false);
+                LeSend.setVisible(false);
+                LeSend.setEnabled(false);
+
                 break;
             case STOPPED:
                 stop.setVisible(true);
@@ -273,11 +307,11 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(true);
                 upload.setEnabled(true);
 
-                read.setVisible(false);
-                read.setEnabled(false);
+                LeReceive.setVisible(false);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(false);
-                write.setEnabled(false);
+                LeSend.setVisible(false);
+                LeSend.setEnabled(false);
 
                 break;
             case RESUMED:
@@ -287,11 +321,11 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(false);
                 upload.setEnabled(false);
 
-                read.setVisible(false);
-                read.setEnabled(false);
+                LeReceive.setVisible(false);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(false);
-                write.setEnabled(false);
+                LeSend.setVisible(false);
+                LeSend.setEnabled(false);
 
                 break;
             case PAUSED:
@@ -301,11 +335,11 @@ public class WorkActivity extends AppCompatActivity {
                 upload.setVisible(false);
                 upload.setEnabled(false);
 
-                read.setVisible(false);
-                read.setEnabled(false);
+                LeReceive.setVisible(false);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(false);
-                write.setEnabled(false);
+                LeSend.setVisible(false);
+                LeSend.setEnabled(false);
 
                 break;
         }
@@ -320,30 +354,23 @@ public class WorkActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id){
             case R.id.DisplayX:
-                charX.append("X:\n");
-                for(Float f : ValX){
-                    charX.append(String.valueOf(f));
-                    charX.append("\n");
-                }
-                charX.append("Y:\n");
-                for(Float f : ValY){
-                    charX.append(String.valueOf(f));
-                    charX.append("\n");
-                }
-                charX.append("Z:\n");
-                for(Float f : ValZ){
-                    charX.append(String.valueOf(f));
-                    charX.append("\n");
-                }
+                displayValX();
+                break;
+            case R.id.DisplayY:
+                displayValY();
+                break;
+            case R.id.DisplayZ:
+                displayValZ();
                 break;
             case R.id.aws_stop:
                 break;
             case R.id.aws_upload:
                 break;
-            case R.id.bluetooth_read:
+            case R.id.bluetooth_receive:
                 BLUETOOTH_SERVICE.StartService();
                 break;
-            case R.id.bluetooth_write:
+            case R.id.bluetooth_send:
+                BLUETOOTH_SERVICE.SendMessage(ValX,ValY,ValZ);
                 break;
         }
         return super.onOptionsItemSelected(item);
