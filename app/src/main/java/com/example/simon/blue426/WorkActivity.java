@@ -31,8 +31,12 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Handler;
 
 public class WorkActivity extends AppCompatActivity {
+
+    private AWS amazon;
+    private String file_path;
 
     private Context theContext;
 
@@ -48,6 +52,8 @@ public class WorkActivity extends AppCompatActivity {
     private ExpandableListView servicesWindow;
     private ListView characteristicView;
 
+    private android.os.Handler h = new android.os.Handler();
+
     private Integer count = 0;
 
     public List<String> servicesList;
@@ -61,7 +67,7 @@ public class WorkActivity extends AppCompatActivity {
     private static Menu theMenu;
     private BroadcastReceiver GattUpdate;
     private enum MenuState{
-        DISCONNECTED, CONNECTING, CONNECTED, UPLOADING, STOPPED, PAUSED, RESUMED
+        DISCONNECTED, CONNECTING, CONNECTED, UPLOADING, DOWNLOADED, STOPPED, PAUSED, RESUMED
     }
     private static MenuState CURRENT_STATE;
 
@@ -100,6 +106,8 @@ public class WorkActivity extends AppCompatActivity {
         filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_CONNECTING);
         filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED);
         filter.addAction(BLUETOOTH_SERVICE.ACTION_GATT_SERVICES_DISCOVERED);
+
+        amazon = new AWS(theContext);
 
         ValX = new ArrayList<>();
         ValY = new ArrayList<>();
@@ -266,6 +274,19 @@ public class WorkActivity extends AppCompatActivity {
                 write.setVisible(false);
                 write.setEnabled(false);
                 break;
+            case DOWNLOADED:
+                stop.setVisible(true);
+                stop.setEnabled(true);
+
+                upload.setVisible(true);
+                upload.setEnabled(false);
+
+                read.setVisible(false);
+                read.setEnabled(false);
+
+                write.setVisible(true);
+                write.setEnabled(true);
+                break;
             case STOPPED:
                 stop.setVisible(true);
                 stop.setEnabled(false);
@@ -337,9 +358,13 @@ public class WorkActivity extends AppCompatActivity {
                 }
                 break;
             case R.id.aws_stop:
+
+                doStuff stuff = new doStuff();
+                h.postDelayed(stuff,5000);
+                CURRENT_STATE = MenuState.UPLOADING
                 break;
             case R.id.aws_upload:
-
+                amazon.upload(file_path);
                 break;
             case R.id.bluetooth_read:
                 BLUETOOTH_SERVICE.StartService();
@@ -348,6 +373,24 @@ public class WorkActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private class doStuff implements Runnable{
+
+        private doStuff(){
+
+        }
+
+        @Override
+        public void run() {
+            //where stuff happens
+            String path = file_path.replace('FileAWS.txt','Rolling.txt');
+            boolean err = amazon.downloadFile(path);
+            if(err)
+                CURRENT_STATE = MenuState.DOWNLOADED;
+            else
+                CURRENT_STATE = MenuState.CONNECTED;
+        }
     }
 
 

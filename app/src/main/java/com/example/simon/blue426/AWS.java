@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.SimpleAdapter;
 
+import com.amazonaws.mobile.AWSConfiguration;
 import com.amazonaws.mobile.content.*;
 import com.amazonaws.mobile.util.ImageSelectorUtils;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static android.content.ContentValues.TAG;
 import com.amazonaws.mobile.AWSMobileClient;
+import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 
 
@@ -32,10 +34,13 @@ import com.amazonaws.regions.Regions;
  */
 
 public class AWS {
-    public static final String S3_PREFIX_PUBLIC = "public/";
+    public static final String S3_PREFIX_DOWNLOAD = "public/lambda/rockAndRoll.txt";
     public static final String S3_PREFIX_PRIVATE = "private/";
     public static final String S3_PREFIX_PROTECTED = "protected/";
-    public static final String S3_PREFIX_UPLOADS = "uploads/";
+    public static final String S3_PREFIX_UPLOADS = "uploads/discovery/";
+
+    private static final Regions region = AWSConfiguration.AMAZON_S3_USER_FILES_BUCKET_REGION;
+    private static final String bucket = AWSConfiguration.AMAZON_S3_USER_FILES_BUCKET;
 
     /** Permission Request Code (Must be < 256). */
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 93;
@@ -43,37 +48,44 @@ public class AWS {
     /** Upload Request Code for uploads folder action **/
     private static final int UPLOAD_REQUEST_CODE = 112;
 
-    /** The user file manager. Used on uploads folder */
-    private UserFileManager userFileManager;
+    private Context context;
 
-    private void upload(final String bucket, final Regions region) {
+    public AWS (Context context_a) {
+        context = context_a;
+    }
+
+    public void upload(final String path) {
         AWSMobileClient.defaultMobileClient()
-                .createUserFileManager(getContext(), bucket, S3_PREFIX_UPLOADS, region,
-                        new UserFileManager.BuilderResultHandler() {
-                            @Override
-                            public void onComplete(final UserFileManager userFileManager) {
-                                if (!isAdded()) {
-                                    userFileManager.destroy();
-                                    return;
-                                }
+                .createUserFileManager(context, bucket, S3_PREFIX_UPLOADS ,region, new UserFileManager.BuilderResultHandler() {
+                    @Override
+                    public void onComplete(final UserFileManager userFileManager) {
+                        final File file = new File(path);
+                        userFileManager.uploadContent(file, path, new ContentProgressListener() {
 
-                                UserFilesDemoFragment.this.userFileManager = userFileManager;
-                                userFileManagerCreatingLatch.countDown();
+                            @Override
+                            public void onSuccess(final ContentItem contentItem) {
+                                // Handle successful action here
+                            }
+
+                            @Override
+                            public void onProgressUpdate(final String fileName, final boolean isWaiting,
+                                                         final long bytesCurrent, final long bytesTotal) {
+                                // Handle progress update here
+                            }
+
+                            @Override
+                            public void onError(final String fileName, final Exception ex) {
+                                // Handle error case here
                             }
                         });
+                    }
+                });
+    }
 
-        final Activity activity = getActivity();
+    public boolean downloadFile(final String path){
 
-        if (ContextCompat.checkSelfPermission(activity,
-                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE);
-            return;
-        }
 
-        // We have permission, so show the image selector.
-        final Intent intent = ImageSelectorUtils.getImageSelectionIntent();
-        startActivityForResult(intent, UPLOAD_REQUEST_CODE);
+        return false;
     }
 
 
