@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -232,6 +234,7 @@ public class WorkActivity extends AppCompatActivity {
 //                outputStreamWriter.append(w.next().toString());
             int i = 0;
             while(i<250){
+
                 outputStreamWriter.append("a" + "\t" + "b" + "\t" + "c");
                 outputStreamWriter.append("\n\r");
 
@@ -240,6 +243,7 @@ public class WorkActivity extends AppCompatActivity {
                 i++;
 
             }
+
             outputStreamWriter.close();
             file_path = theContext.getFilesDir()+"/"+out_file;
         } catch (Exception e) {

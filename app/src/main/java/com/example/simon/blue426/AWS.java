@@ -17,6 +17,8 @@ import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferType;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -84,12 +86,8 @@ public class AWS {
 
     public boolean downloadFile(final String path){
 
-
         return false;
     }
-
-
-
 
 
 }
