@@ -36,7 +36,7 @@ import com.amazonaws.regions.Regions;
  */
 
 public class AWS {
-    public static final String S3_PREFIX_DOWNLOAD = "public/lambda/rockAndRoll.txt";
+    public static final String S3_PREFIX_DOWNLOAD = "public/lambda/";
     public static final String S3_PREFIX_PRIVATE = "private/";
     public static final String S3_PREFIX_PROTECTED = "protected/";
     public static final String S3_PREFIX_UPLOADS = "uploads/discovery/";
@@ -85,7 +85,31 @@ public class AWS {
     }
 
     public boolean downloadFile(final String path){
+        AWSMobileClient.defaultMobileClient()
+                .createUserFileManager(context, bucket, S3_PREFIX_DOWNLOAD ,region, new UserFileManager.BuilderResultHandler() {
+                    @Override
+                    public void onComplete(final UserFileManager userFileManager) {
 
+                        userFileManager.downloadRecentContent(S3_PREFIX_DOWNLOAD, new ContentProgressListener() {
+
+                            @Override
+                            public void onSuccess(final ContentItem contentItem) {
+                                // Handle successful action here
+                            }
+
+                            @Override
+                            public void onProgressUpdate(final String fileName, final boolean isWaiting,
+                                                         final long bytesCurrent, final long bytesTotal) {
+                                // Handle progress update here
+                            }
+
+                            @Override
+                            public void onError(final String fileName, final Exception ex) {
+                                // Handle error case here
+                            }
+                        });
+                    }
+                });
         return false;
     }
 

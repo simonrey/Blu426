@@ -471,12 +471,13 @@ public class WorkActivity extends AppCompatActivity {
                 readFromFile(theContext);
                 break;
             case R.id.aws_stop:
-                //doStuff stuff = new doStuff();
-                //h.postDelayed(stuff,5000);
-                //CURRENT_STATE = MenuState.UPLOADING;
                 break;
             case R.id.aws_upload:
                 amazon.upload(file_path);
+                CURRENT_STATE = MenuState.UPLOADING;
+                doStuff stuff = new doStuff();
+                h.postDelayed(stuff,5000);
+                CURRENT_STATE = MenuState.DOWNLOADED;
                 break;
             case R.id.bluetooth_receive:
                 BLUETOOTH_SERVICE.StartService();
@@ -496,7 +497,7 @@ public class WorkActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            //where stuff happens
+            file_path = theContext.getFilesDir()+"/"+in_file;
             boolean err = amazon.downloadFile(file_path);
             if(err)
                 CURRENT_STATE = MenuState.DOWNLOADED;
