@@ -113,6 +113,7 @@ public class WorkActivity extends AppCompatActivity {
     {
         BLUETOOTH_SERVICE.EndService();
         super.onBackPressed();
+
     }
 
     public static boolean getReceiverStatus(){
@@ -148,10 +149,11 @@ public class WorkActivity extends AppCompatActivity {
                     byte[] value = intent.getByteArrayExtra(BLUETOOTH_SERVICE.DATA_CHARACTERISTIC_VALUE);
                     float val = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat();
 
-//                    charX.append(String.valueOf(dest)+ String.valueOf(val));
+//                    charX.append(String.valueOf(val));
+//
 //                    charX.append("\n");
 
-                    ValX.add(val);
+
                     if(dest == 1){
                         ValX.add(val);
                     }
@@ -268,8 +270,8 @@ public class WorkActivity extends AppCompatActivity {
                 LeReceive.setVisible(false);
                 LeReceive.setEnabled(false);
 
-                LeSend.setVisible(false);
-                LeSend.setEnabled(false);
+                LeSend.setVisible(true);
+                LeSend.setEnabled(true);
 
                 break;
             case DISCONNECTED:
@@ -370,7 +372,7 @@ public class WorkActivity extends AppCompatActivity {
                 BLUETOOTH_SERVICE.StartService();
                 break;
             case R.id.bluetooth_send:
-                BLUETOOTH_SERVICE.SendMessage(ValX,ValY,ValZ);
+                BLUETOOTH_SERVICE.SendMessage(ValX);
                 break;
         }
         return super.onOptionsItemSelected(item);

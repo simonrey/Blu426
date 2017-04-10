@@ -35,14 +35,14 @@
     <item
         android:id="@+id/DisplayX"
         android:title="DisplayX"
-        android:visible="false"/>
+        android:visible="true"/>
     <item
         android:id="@+id/DisplayY"
         android:title="DisplayY"
-        android:visible="false"/>
+        android:visible="true"/>
     <item
         android:id="@+id/DisplayZ"
         android:title="DisplayZ"
-        android:visible="false"/>
+        android:visible="true"/>
 
 </menu>
