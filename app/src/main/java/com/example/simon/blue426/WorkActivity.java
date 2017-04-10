@@ -53,7 +53,7 @@ public class WorkActivity extends AppCompatActivity {
     private AWS amazon;
     private String file_path;
     private String out_file = "FileAWS.txt";
-    private String in_file = "Rolling.txt";
+    private String in_file = "rockAndRoll.txt";
 
     private Context theContext;
 
@@ -63,9 +63,6 @@ public class WorkActivity extends AppCompatActivity {
     public static String BLUETOOTH_MAC;
     public static IntentFilter filter = new IntentFilter();
 
-    private TextView charX;
-    private TextView charY;
-    private TextView charZ;
     private TextView text;
 
     private int itemCounter = 0;
@@ -77,6 +74,7 @@ public class WorkActivity extends AppCompatActivity {
     public ArrayList<Float> ValX;
     public ArrayList<Float> ValY;
     public ArrayList<Float> ValZ;
+    public ArrayList<Float> ValRoll;
     public ArrayList<String> FileOutput;
 
     public ArrayAdapter adapter;
@@ -194,54 +192,18 @@ public class WorkActivity extends AppCompatActivity {
 
     }
 
-    private void displayValX(){
-        charX.append("X:\n");
-        for(Float f : ValX){
-            charX.append(String.valueOf(f));
-            charX.append("\n");
-        }
-    }
-    private void displayValY(){
-        charY.append("Y:\n");
-        for(Float f : ValY){
-            charX.append(String.valueOf(f));
-            charX.append("\n");
-        }
-    }
-    private void displayValZ(){
-        charZ.append("Z:\n");
-        for(Float f : ValZ){
-            charX.append(String.valueOf(f));
-            charX.append("\n");
-        }
-    }
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void writeToFile(){
-//        ListIterator x = ValX.listIterator();
-//        ListIterator y = ValY.listIterator();
-//        ListIterator z = ValZ.listIterator();
-//        FileOutput = new ArrayList<>();
-//        ListIterator w = FileOutput.listIterator();
-//        while(x.hasNext()) {
-//            String s = x.next() + "\t" + y.next() + "\t" + z.next();
-////          builder.append(x.next() + "\t" + y.next() + "\t" + z.next());
-////          builder.append(System.lineSeparator());
-//            FileOutput.add(s);
-//        }
+        ListIterator x = ValX.listIterator();
+        ListIterator y = ValY.listIterator();
+        ListIterator z = ValZ.listIterator();
         try{
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput(out_file, Context.MODE_PRIVATE));
-//            while(!FileOutput.isEmpty()) {
-//                outputStreamWriter.append(w.next().toString());
-            int i = 0;
-            while(i<250){
-
-                outputStreamWriter.append("a" + "\t" + "b" + "\t" + "c");
-                outputStreamWriter.append("\n\r");
-
-                outputStreamWriter.append(System.lineSeparator());
-//                w.remove();
-                i++;
-
+            while(x.hasNext()) {
+                outputStreamWriter.append(x.next() + "\t" + y.next() + "\t" + z.next());
+                if(x.hasNext()){
+                    outputStreamWriter.append("\n\r");
+                }
             }
 
             outputStreamWriter.close();
@@ -253,11 +215,12 @@ public class WorkActivity extends AppCompatActivity {
 
 
     }
-    private String readFromFile(Context context) {
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private void readFromFile(Context context) {
 
         String ret = "";
         text.setText("");
-
+        ValRoll = new ArrayList<>();
         try {
             InputStream inputStream = theContext.openFileInput(out_file);
 
@@ -268,12 +231,13 @@ public class WorkActivity extends AppCompatActivity {
                 StringBuilder stringBuilder = new StringBuilder();
 
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
+//                    ValRoll.add(Float.parseFloat(receiveString));
+                    text.append(receiveString);
+                    text.append("\n\r");
                     stringBuilder.append(receiveString);
                 }
 
                 inputStream.close();
-                ret = stringBuilder.toString();
-                text.append(ret);
             }
         }
         catch (FileNotFoundException e) {
@@ -283,7 +247,7 @@ public class WorkActivity extends AppCompatActivity {
             Log.e("login activity", "Can not read file: " + e.toString());
         }
 
-        return ret;
+//        BLUETOOTH_SERVICE.SendMessage(ValRoll);
     }
 
 
