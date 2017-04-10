@@ -33,16 +33,16 @@
         android:title="Bluetooth Write"
         android:visible="false"/>
     <item
-        android:id="@+id/DisplayX"
-        android:title="DisplayX"
+        android:id="@+id/display_file"
+        android:title="Display file"
         android:visible="true"/>
     <item
-        android:id="@+id/DisplayY"
-        android:title="DisplayY"
-        android:visible="true"/>
+        android:id="@+id/write_file"
+        android:visible="true"
+        android:title="Write to file"/>
     <item
-        android:id="@+id/DisplayZ"
-        android:title="DisplayZ"
-        android:visible="true"/>
+        android:id="@+id/print_values"
+        android:visible="true"
+        android:title="Print values"/>
 
 </menu>

@@ -21,7 +21,9 @@ import android.util.Log;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,11 +47,11 @@ public class BluetoothService extends Service{
     BluetoothDevice theDevice;
     Context theContext;
     BluetoothGatt theGatt;
-    private ExecutorService threadPoolExecutor;
-    public Future writerFuture;
-    private boolean isReady = true;
-    private int timeDelay=0;
-    android.os.Handler handler = new android.os.Handler();
+
+    ArrayList<Float> writeBuffer;
+
+    private android.os.Handler handler = new android.os.Handler();
+
 
     public static final String ACTION_GATT_CONNECTING = "ACTION_GATT_CONNECTING";
     public static final String ACTION_GATT_CONNECTED = "ACTION_GATT_CONNECTED";
@@ -65,18 +67,22 @@ public class BluetoothService extends Service{
     private static final String CHARACTERISTIC4 = "08366e80-cf3a-11e1-9ab4-0002a5d5c51b";
 
     private ArrayList<BluetoothGattService> SERVICES;
-    private ArrayList<Float> valWrite;
+
+    private int counter = 0;
+    private ListIterator<Float> writeIterator;
 
     public BluetoothService(BluetoothDevice device, Context context){
         theDevice = device;
         theContext = context;
         SERVICES = new ArrayList<>();
-        threadPoolExecutor = Executors.newSingleThreadExecutor();
 
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void EndService(){
+//        super.onDestroy();
+        SERVICES.clear();
+//        writeBuffer.clear();
         theGatt.disconnect();
         theGatt.close();
     }
@@ -144,7 +150,11 @@ public class BluetoothService extends Service{
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicWrite(gatt, characteristic, status);
                 if(status == BluetoothGatt.GATT_SUCCESS){
-                    Log.d("SUCCESS","SUCCESS");
+                    if(!writeBuffer.isEmpty()) {
+                        WriteMessage writeMessage = new WriteMessage(writeIterator.next());
+                        writeIterator.remove();
+                        handler.postDelayed(writeMessage,600);
+                    }
                 }
                 if(status == BluetoothGatt.GATT_FAILURE){
 
@@ -191,42 +201,36 @@ public class BluetoothService extends Service{
         }
         theContext.sendBroadcast(intent);
     }
-
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void SendMessage(ArrayList<Float> ValX) {
-        LeWriter writer = new LeWriter(ValX);
-        writer.execute(writer);
+        writeBuffer = ValX;
+        writeIterator = writeBuffer.listIterator();
+        WriteMessage writeMessage = new WriteMessage(writeIterator.next());
+        writeIterator.remove();
+        writeMessage.run();
     }
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private class WriteMessage implements Runnable{
+        float writeItem;
 
-    public class LeWriter extends AsyncTask {
-        byte[] a = new byte[4];
-        int b;
-        ArrayList<Float> x;
-
-        public LeWriter(ArrayList<Float> ValX){
-            x = ValX;
+        private WriteMessage(float item){
+            writeItem = item;
         }
 
-        @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
         @Override
-        protected Object doInBackground(Object[] params) {
-            while(x.iterator().hasNext()) {
-                b = Float.floatToRawIntBits(x.iterator().next());
-                x.iterator().remove();
-                a[0] = (byte) (b & 0xff);
-                a[1] = (byte) ((b >> 8) & 0xff);
-                a[2] = (byte) ((b >> 16) & 0xff);
-                a[3] = (byte) ((b >> 24) & 0xff);
-                theGatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC4)).setValue(a);
-                theGatt.writeCharacteristic(theGatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC4)));
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            return null;
-        }
+        public void run() {
+            int a;
+            byte[] b = new byte[4];
+            float c = writeItem;
+
+            a = Float.floatToRawIntBits(c);
+            b[0] = (byte) (a & 0xff);
+            b[1] = (byte) ((a >> 8) & 0xff);
+            b[2] = (byte) ((a >> 16) & 0xff);
+            b[3] = (byte) ((a >> 24) & 0xff);
+            theGatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC4)).setValue(b);
+            theGatt.writeCharacteristic(theGatt.getService(UUID.fromString(SERVICE1)).getCharacteristic(UUID.fromString(CHARACTERISTIC4)));
+        };
     }
 
 
@@ -236,29 +240,4 @@ public class BluetoothService extends Service{
         return null;
     }
 
-
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    private class CharacteristicWriter implements  Runnable{
-        ArrayList<Float> x;
-        BluetoothGattCharacteristic characteristic1;
-
-
-        private CharacteristicWriter(ArrayList<Float> ValX){
-            x = new ArrayList<>();
-            x.add((float)5);
-//            characteristic = new BluetoothGattCharacteristic(UUID.fromString(CHARACTERISTIC4),BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,BluetoothGattCharacteristic.PERMISSION_WRITE);
-        }
-
-        @Override
-        public void run() {
-
-
-//            while(x.iterator().hasNext()){
-//                byte[] b = ByteBuffer.allocate(4).putFloat(x.iterator().next()).array();
-//                x.iterator().remove();
-//                characteristic1.setValue(b);
-//                while(!theGatt.writeCharacteristic(characteristic1));
-//            }
-        }
-    }
 }

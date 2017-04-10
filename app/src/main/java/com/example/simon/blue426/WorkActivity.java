@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -27,11 +29,20 @@ import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 
 public class WorkActivity extends AppCompatActivity {
 
@@ -46,14 +57,17 @@ public class WorkActivity extends AppCompatActivity {
     private TextView charX;
     private TextView charY;
     private TextView charZ;
+    private TextView text;
 
-    private static boolean isReceiverReady;
+    private int itemCounter = 0;
+
 
 
     public List<String> servicesList;
     public ArrayList<Float> ValX;
     public ArrayList<Float> ValY;
     public ArrayList<Float> ValZ;
+    public ArrayList<String> FileOutput;
 
     public ArrayAdapter adapter;
 
@@ -71,9 +85,10 @@ public class WorkActivity extends AppCompatActivity {
         setContentView(R.layout.activity_work);
         theContext = this.getApplicationContext();
 
-        charX = (TextView) findViewById(R.id.charX);
-        charY = (TextView) findViewById(R.id.charY);
-        charZ = (TextView) findViewById(R.id.charZ);
+//        charX = (TextView) findViewById(R.id.charX);
+//        charY = (TextView) findViewById(R.id.charY);
+//        charZ = (TextView) findViewById(R.id.charZ);
+        text = (TextView) findViewById(R.id.TEXT_STATUS_ID);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -116,12 +131,6 @@ public class WorkActivity extends AppCompatActivity {
 
     }
 
-    public static boolean getReceiverStatus(){
-        return isReceiverReady;
-    }
-    public static void setReceiverStatus(boolean receiverReady){
-        isReceiverReady = receiverReady;
-    }
 
     @Override
     protected void onResume(){
@@ -148,11 +157,7 @@ public class WorkActivity extends AppCompatActivity {
                     int dest = intent.getIntExtra(BLUETOOTH_SERVICE.DATA_CHARACTERISTIC_DESTINATION,0);
                     byte[] value = intent.getByteArrayExtra(BLUETOOTH_SERVICE.DATA_CHARACTERISTIC_VALUE);
                     float val = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-
-//                    charX.append(String.valueOf(val));
-//
-//                    charX.append("\n");
-
+                    itemCounter++;
 
                     if(dest == 1){
                         ValX.add(val);
@@ -167,9 +172,7 @@ public class WorkActivity extends AppCompatActivity {
                 if(BLUETOOTH_SERVICE.ACTION_GATT_DISCONNECTED.equals(action)){
                     CURRENT_STATE = MenuState.DISCONNECTED;
                     invalidateOptionsMenu();
-
                 }
-                isReceiverReady = true;
             }
         };
         registerReceiver(GattUpdate,filter);
@@ -200,6 +203,74 @@ public class WorkActivity extends AppCompatActivity {
             charX.append("\n");
         }
     }
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    private void writeToFile(){
+        ListIterator x = ValX.listIterator();
+        ListIterator y = ValY.listIterator();
+        ListIterator z = ValZ.listIterator();
+        FileOutput = new ArrayList<>();
+        ListIterator w = FileOutput.listIterator();
+        while(x.hasNext()) {
+            String s = x.next() + "\t" + y.next() + "\t" + z.next();
+//          builder.append(x.next() + "\t" + y.next() + "\t" + z.next());
+//          builder.append(System.lineSeparator());
+            FileOutput.add(s);
+        }
+        try{
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput("FileAWS.txt", Context.MODE_PRIVATE));
+            while(!FileOutput.isEmpty()) {
+                outputStreamWriter.append(w.next().toString());
+//            int i = 0;
+//            while(i<250){
+//                outputStreamWriter.append("a" + "\t" + "b" + "\t" + "c");
+//                outputStreamWriter.append("\n\r");
+
+                outputStreamWriter.append(System.lineSeparator());
+                w.remove();
+//                i++;
+
+            }
+            outputStreamWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
+    private String readFromFile(Context context) {
+
+        String ret = "";
+        text.setText("");
+
+        try {
+            InputStream inputStream = theContext.openFileInput("FileAWS.txt");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+                text.append(ret);
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        }
+        catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+        return ret;
+    }
+
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void serviceListAdd(String newService) {
@@ -227,7 +298,6 @@ public class WorkActivity extends AppCompatActivity {
         BLUETOOTH_SERVICE.EndService();
         super.onDestroy();
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -346,8 +416,7 @@ public class WorkActivity extends AppCompatActivity {
                 break;
         }
     }
-
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -355,14 +424,23 @@ public class WorkActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         switch (id){
-            case R.id.DisplayX:
-                displayValX();
+            case R.id.write_file:
+                writeToFile();
                 break;
-            case R.id.DisplayY:
-                displayValY();
+            case R.id.print_values:
+                ListIterator x = ValX.listIterator();
+                ListIterator y = ValY.listIterator();
+                ListIterator z = ValZ.listIterator();
+                int count = 0;
+                while(x.hasNext()){
+                    text.append(Integer.toString(count) + ": " + x.next() + ", " + y.next() + ", " + z.next());
+                    text.append("\n");
+                    text.append(System.lineSeparator());
+                    count++;
+                }
                 break;
-            case R.id.DisplayZ:
-                displayValZ();
+            case R.id.display_file:
+                readFromFile(theContext);
                 break;
             case R.id.aws_stop:
                 break;
@@ -377,21 +455,17 @@ public class WorkActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
-
     @Override
     public boolean onPrepareOptionsMenu(Menu menu){
         UpdateMenuOptions(menu);
         SetActionBarTitles();
         return true;
     }
-
     public boolean StartUploadAWS(MenuItem item){
 
         UpdateMenuOptions(theMenu);
         return true;
     }
-
     public boolean StopUploadAWS(MenuItem item){
         UpdateMenuOptions(theMenu);
         return true;
