@@ -49,7 +49,8 @@ import java.util.ListIterator;
 public class WorkActivity extends AppCompatActivity {
 
     private AWS amazon;
-    private String file_path;
+    private String file_path = "FileAWS.txt";
+    private String data_path = "Rolling.txt";
 
     private Context theContext;
 
@@ -225,7 +226,7 @@ public class WorkActivity extends AppCompatActivity {
             FileOutput.add(s);
         }
         try{
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput("FileAWS.txt", Context.MODE_PRIVATE));
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput(file_path, Context.MODE_PRIVATE));
             while(!FileOutput.isEmpty()) {
                 outputStreamWriter.append(w.next().toString());
 //            int i = 0;
@@ -252,7 +253,7 @@ public class WorkActivity extends AppCompatActivity {
         text.setText("");
 
         try {
-            InputStream inputStream = theContext.openFileInput("FileAWS.txt");
+            InputStream inputStream = theContext.openFileInput(file_path);
 
             if ( inputStream != null ) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -348,8 +349,8 @@ public class WorkActivity extends AppCompatActivity {
                 LeReceive.setVisible(false);
                 LeReceive.setEnabled(false);
 
-                LeSend.setVisible(true);
-                LeSend.setEnabled(true);
+                LeSend.setVisible(false);
+                LeSend.setEnabled(false);
 
                 break;
             case DISCONNECTED:
@@ -370,7 +371,7 @@ public class WorkActivity extends AppCompatActivity {
                 stop.setVisible(true);
                 stop.setEnabled(true);
 
-                upload.setVisible(true);
+                upload.setVisible(false);
                 upload.setEnabled(false);
 
                 LeReceive.setVisible(false);
@@ -381,17 +382,17 @@ public class WorkActivity extends AppCompatActivity {
 
                 break;
             case DOWNLOADED:
-                stop.setVisible(true);
-                stop.setEnabled(true);
+                stop.setVisible(false);
+                stop.setEnabled(false);
 
                 upload.setVisible(true);
                 upload.setEnabled(false);
 
-                read.setVisible(false);
-                read.setEnabled(false);
+                LeReceive.setVisible(false);
+                LeReceive.setEnabled(false);
 
-                write.setVisible(true);
-                write.setEnabled(true);
+                LeSend.setVisible(true);
+                LeSend.setEnabled(true);
                 break;
             case STOPPED:
                 stop.setVisible(true);
@@ -464,10 +465,9 @@ public class WorkActivity extends AppCompatActivity {
                 readFromFile(theContext);
                 break;
             case R.id.aws_stop:
-
-                doStuff stuff = new doStuff();
-                h.postDelayed(stuff,5000);
-                CURRENT_STATE = MenuState.UPLOADING
+                //doStuff stuff = new doStuff();
+                //h.postDelayed(stuff,5000);
+                //CURRENT_STATE = MenuState.UPLOADING;
                 break;
             case R.id.aws_upload:
                 amazon.upload(file_path);
@@ -491,8 +491,7 @@ public class WorkActivity extends AppCompatActivity {
         @Override
         public void run() {
             //where stuff happens
-            String path = file_path.replace('FileAWS.txt','Rolling.txt');
-            boolean err = amazon.downloadFile(path);
+            boolean err = amazon.downloadFile(data_path);
             if(err)
                 CURRENT_STATE = MenuState.DOWNLOADED;
             else
