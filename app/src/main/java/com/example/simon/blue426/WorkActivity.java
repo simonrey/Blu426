@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -205,32 +207,40 @@ public class WorkActivity extends AppCompatActivity {
     }
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void writeToFile(){
-        ListIterator x = ValX.listIterator();
-        ListIterator y = ValY.listIterator();
-        ListIterator z = ValZ.listIterator();
-        FileOutput = new ArrayList<>();
-        ListIterator w = FileOutput.listIterator();
-        while(x.hasNext()) {
-            String s = x.next() + "\t" + y.next() + "\t" + z.next();
-//          builder.append(x.next() + "\t" + y.next() + "\t" + z.next());
-//          builder.append(System.lineSeparator());
-            FileOutput.add(s);
-        }
+//        ListIterator x = ValX.listIterator();
+//        ListIterator y = ValY.listIterator();
+//        ListIterator z = ValZ.listIterator();
+//        FileOutput = new ArrayList<>();
+//        ListIterator w = FileOutput.listIterator();
+//        while(x.hasNext()) {
+//            String s = x.next() + "\t" + y.next() + "\t" + z.next();
+////          builder.append(x.next() + "\t" + y.next() + "\t" + z.next());
+////          builder.append(System.lineSeparator());
+//            FileOutput.add(s);
+//        }
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),"FileAWS.txt");
         try{
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput("FileAWS.txt", Context.MODE_PRIVATE));
-            while(!FileOutput.isEmpty()) {
-                outputStreamWriter.append(w.next().toString());
-//            int i = 0;
-//            while(i<250){
+            FileOutputStream stream = new FileOutputStream(file);
+            PrintWriter pw = new PrintWriter(stream);
+
+//            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput("FileAWS.txt", Context.MODE_PRIVATE));
+//            while(!FileOutput.isEmpty()) {
+//                outputStreamWriter.append(w.next().toString());
+            int i = 0;
+            while(i<250){
+                pw.println("A" + "\t" + "B" + "\t" + "C");
+                pw.println();
 //                outputStreamWriter.append("a" + "\t" + "b" + "\t" + "c");
 //                outputStreamWriter.append("\n\r");
-
-                outputStreamWriter.append(System.lineSeparator());
-                w.remove();
-//                i++;
+//
+//                outputStreamWriter.append(System.lineSeparator());
+//                w.remove();
+                i++;
 
             }
-            outputStreamWriter.close();
+            pw.flush();
+            pw.close();
+            stream.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -445,6 +455,8 @@ public class WorkActivity extends AppCompatActivity {
             case R.id.aws_stop:
                 break;
             case R.id.aws_upload:
+                File file = new File("FileAWS.txt");
+                AWS aws = new AWS(theContext,file);
                 break;
             case R.id.bluetooth_receive:
                 BLUETOOTH_SERVICE.StartService();
