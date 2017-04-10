@@ -60,7 +60,7 @@ public class AWS {
                     @Override
                     public void onComplete(final UserFileManager userFileManager) {
                         final File file = new File(path);
-                        userFileManager.uploadContent(file, path, new ContentProgressListener() {
+                        userFileManager.uploadContent(file, file.getName(), new ContentProgressListener() {
 
                             @Override
                             public void onSuccess(final ContentItem contentItem) {

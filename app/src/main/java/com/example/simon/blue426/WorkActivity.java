@@ -49,8 +49,9 @@ import java.util.ListIterator;
 public class WorkActivity extends AppCompatActivity {
 
     private AWS amazon;
-    private String file_path = "FileAWS.txt";
-    private String data_path = "Rolling.txt";
+    private String file_path;
+    private String out_file = "FileAWS.txt";
+    private String in_file = "Rolling.txt";
 
     private Context theContext;
 
@@ -214,32 +215,33 @@ public class WorkActivity extends AppCompatActivity {
     }
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void writeToFile(){
-        ListIterator x = ValX.listIterator();
-        ListIterator y = ValY.listIterator();
-        ListIterator z = ValZ.listIterator();
-        FileOutput = new ArrayList<>();
-        ListIterator w = FileOutput.listIterator();
-        while(x.hasNext()) {
-            String s = x.next() + "\t" + y.next() + "\t" + z.next();
-//          builder.append(x.next() + "\t" + y.next() + "\t" + z.next());
-//          builder.append(System.lineSeparator());
-            FileOutput.add(s);
-        }
+//        ListIterator x = ValX.listIterator();
+//        ListIterator y = ValY.listIterator();
+//        ListIterator z = ValZ.listIterator();
+//        FileOutput = new ArrayList<>();
+//        ListIterator w = FileOutput.listIterator();
+//        while(x.hasNext()) {
+//            String s = x.next() + "\t" + y.next() + "\t" + z.next();
+////          builder.append(x.next() + "\t" + y.next() + "\t" + z.next());
+////          builder.append(System.lineSeparator());
+//            FileOutput.add(s);
+//        }
         try{
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput(file_path, Context.MODE_PRIVATE));
-            while(!FileOutput.isEmpty()) {
-                outputStreamWriter.append(w.next().toString());
-//            int i = 0;
-//            while(i<250){
-//                outputStreamWriter.append("a" + "\t" + "b" + "\t" + "c");
-//                outputStreamWriter.append("\n\r");
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(theContext.openFileOutput(out_file, Context.MODE_PRIVATE));
+//            while(!FileOutput.isEmpty()) {
+//                outputStreamWriter.append(w.next().toString());
+            int i = 0;
+            while(i<250){
+                outputStreamWriter.append("a" + "\t" + "b" + "\t" + "c");
+                outputStreamWriter.append("\n\r");
 
                 outputStreamWriter.append(System.lineSeparator());
-                w.remove();
-//                i++;
+//                w.remove();
+                i++;
 
             }
             outputStreamWriter.close();
+            file_path = theContext.getFilesDir()+"/"+out_file;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -253,7 +255,7 @@ public class WorkActivity extends AppCompatActivity {
         text.setText("");
 
         try {
-            InputStream inputStream = theContext.openFileInput(file_path);
+            InputStream inputStream = theContext.openFileInput(out_file);
 
             if ( inputStream != null ) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -491,7 +493,7 @@ public class WorkActivity extends AppCompatActivity {
         @Override
         public void run() {
             //where stuff happens
-            boolean err = amazon.downloadFile(data_path);
+            boolean err = amazon.downloadFile(file_path);
             if(err)
                 CURRENT_STATE = MenuState.DOWNLOADED;
             else
