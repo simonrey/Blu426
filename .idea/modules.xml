@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AWSMobileHelper/AWSMobileHelper.iml" filepath="$PROJECT_DIR$/AWSMobileHelper/AWSMobileHelper.iml" />
-      <module fileurl="file://$PROJECT_DIR$/AWSMobileHelper/AWSMobileHelper.iml" filepath="$PROJECT_DIR$/AWSMobileHelper/AWSMobileHelper.iml" />
       <module fileurl="file://$PROJECT_DIR$/Blu426.iml" filepath="$PROJECT_DIR$/Blu426.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>

@@ -222,7 +222,7 @@ public class WorkActivity extends AppCompatActivity {
         text.setText("");
         ValRoll = new ArrayList<>();
         try {
-            InputStream inputStream = theContext.openFileInput(out_file);
+            InputStream inputStream = theContext.openFileInput(in_file);
 
             if ( inputStream != null ) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -463,6 +463,7 @@ public class WorkActivity extends AppCompatActivity {
         public void run() {
             file_path = theContext.getFilesDir()+"/"+in_file;
             boolean err = amazon.downloadFile(file_path);
+
             if(err)
                 CURRENT_STATE = MenuState.DOWNLOADED;
             else
